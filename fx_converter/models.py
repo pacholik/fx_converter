@@ -75,4 +75,6 @@ class BaseModelMixin(db.Model):
 class Rate(BaseModelMixin):
     __tablename__ = "rate"
 
-    # TODO: define the model
+    date = db.Column(db.Date)
+    code = db.Column(db.Text(length=3))
+    rate = db.Column(db.Numeric())
