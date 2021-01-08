@@ -1,7 +1,15 @@
 from flask import Flask
 from flask_graphql import GraphQLView
 
+from fx_converter.database import db
+from fx_converter.models import Rate
 from fx_converter.schema import schema
+
+
+def init_db(app: Flask):
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
 
 
 def create_app():
@@ -17,10 +25,18 @@ def create_app():
     )
     app.url_map.strict_slashes = False
 
+    init_db(app)
+
     return app
 
 
 app = create_app()
+
+
+@app.route('/test')
+def test():
+    print(Rate.query.all())
+    return 'lol'
 
 
 if __name__ == "__main__":
