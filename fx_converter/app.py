@@ -11,7 +11,8 @@ def create_app():
     app.add_url_rule(
         "/graphql",
         view_func=GraphQLView.as_view(
-            "graphql", schema=schema, graphiql=True, context={"db_session": None}
+            "graphql", schema=schema, graphiql=True,
+            context={"db_session": None},
         ),
     )
     app.url_map.strict_slashes = False

@@ -2,8 +2,13 @@ import sqlalchemy.orm.exc
 from datetime import datetime
 from flask_sqlalchemy import sqlalchemy as sa
 from sqlalchemy import inspect
+import logging
 
+from fx_converter.config import LOGGER_NAME
 from fx_converter.database import db
+
+
+logger = logging.getLogger(LOGGER_NAME)
 
 
 class BaseModelMixin(db.Model):
@@ -14,7 +19,8 @@ class BaseModelMixin(db.Model):
     # https://stackoverflow.com/questions/46490229/retrieve-the-object-id-in-graphql
     id_ = db.Column(db.Integer, primary_key=True, autoincrement=True)
     created = db.Column(db.DateTime, server_default=sa.sql.func.now())
-    updated = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    updated = db.Column(db.DateTime, default=datetime.now,
+                        onupdate=datetime.now)
 
     @classmethod
     def create(cls, **kwargs):
@@ -36,7 +42,7 @@ class BaseModelMixin(db.Model):
         q = cls.query.order_by(cls.id.desc())
         if not any([start, limit]):
             return q.all()
-        return q[start : start + limit]
+        return q[start: start + limit]
 
     def update(self, **kwargs):
         for k, v in kwargs.items():
@@ -52,7 +58,8 @@ class BaseModelMixin(db.Model):
             db.session.commit()
         except sqlalchemy.orm.exc.ObjectDeletedError:
             db.session.rollback()
-            logger.warn("Error during deleting: Object %s already deleted", self)
+            logger.warn("Error during deleting: Object %s already deleted",
+                        self)
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.id == other.id
@@ -61,7 +68,8 @@ class BaseModelMixin(db.Model):
         return hash((self.__class__, self.id))
 
     def to_dict(self):
-        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+        return {c.key: getattr(self, c.key)
+                for c in inspect(self).mapper.column_attrs}
 
 
 class Rate(BaseModelMixin):
