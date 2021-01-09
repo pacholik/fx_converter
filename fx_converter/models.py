@@ -77,4 +77,7 @@ class Rate(BaseModelMixin):
 
     date = db.Column(db.Date)
     code = db.Column(db.Text(length=3))
-    rate = db.Column(db.Numeric())
+    value = db.Column(db.Numeric())
+
+
+db.Index('rateDateCode', Rate.date, Rate.code, unique=True)

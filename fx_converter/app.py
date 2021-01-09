@@ -2,8 +2,8 @@ from flask import Flask
 from flask_graphql import GraphQLView
 
 from fx_converter.database import db
-from fx_converter.models import Rate
 from fx_converter.schema import schema
+from fx_converter.service import basic_db_data
 
 
 def init_db(app: Flask):
@@ -33,9 +33,16 @@ def create_app():
 app = create_app()
 
 
+@app.teardown_request
+def teardown_request(exception):
+    if exception:
+        db.session.rollback()
+    db.session.remove()
+
+
 @app.route('/test')
 def test():
-    print(Rate.query.all())
+    basic_db_data()
     return 'lol'
 
 
