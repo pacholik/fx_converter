@@ -1,4 +1,6 @@
 from graphene.test import Client
+import warnings
+warnings.filterwarnings('ignore')
 
 from fx_converter.app import app
 from fx_converter.schema import schema
@@ -13,14 +15,31 @@ with app.app_context():
     print(
         schema.execute('''
             query {
-                rate(inputCurrency: "CZK",
-                     inputValue: "123",
-                     outputCurrency: "EUR",
-                     day: "2020-12-31") {
-                    inputCurrency
-                    outputCurrency
-                    day
-                    outputValue
+                convert(inputCurrency: "CZK",
+                        inputValue: "123",
+                        outputCurrency: "EUR",
+                        day: "2020-12-31")
+            }''')
+    )
+
+    # print(
+    #     schema.execute('''
+    #         query {
+    #             availableCurrencies
+    #         }''')
+    # )
+
+    print(
+        schema.execute('''
+            query {
+                rates(last: 10) {
+                    edges {
+                        node {
+                            date
+                            code
+                            value
+                        }
+                    }
                 }
             }''')
     )
