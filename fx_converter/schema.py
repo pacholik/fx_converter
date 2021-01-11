@@ -1,13 +1,5 @@
-"""FIXME: THIS IS AN EXAMPLARY SCHEMA!!!
-
-Source: https://github.com/timfeirg/flask-graphene-boilerplate/blob/master/graphene_boilerplate/schema.py
-"""
-
 import graphene
-from graphene import relay
-from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
 
-from fx_converter.database import db
 from fx_converter.models import Rate as RateModel
 
 
@@ -18,9 +10,11 @@ from fx_converter.models import Rate as RateModel
 
 
 class Rate(graphene.ObjectType):
-    from_ = graphene.String()
-    to_ = graphene.String()
+    input_currency = graphene.String()
+    input_value = graphene.Decimal()
+    output_currency = graphene.String()
     day = graphene.Date()
+    output_value = graphene.Decimal()
 
 
 class Query(graphene.ObjectType):
@@ -29,29 +23,30 @@ class Query(graphene.ObjectType):
 
     # rates = graphene.List(Rate)
     rate = graphene.Field(Rate,
-                          from_=graphene.String(),
-                          to_=graphene.String(),
+                          input_currency=graphene.String(),
+                          input_value=graphene.Decimal(),
+                          output_currency=graphene.String(),
                           day=graphene.Date())
 
-    def resolve_rates(self, info, from_, to_, day):
-        print(self)
-        print(info)
-        print(from_)
-        print(to_)
-        print(day)
+    def resolve_rate(self, info,
+                     input_currency, input_value, output_currency, day):
+        if input_currency == 'EUR':
+            input_eur = 1
+        else:
+            input_eur_db = RateModel.query.filter_by(
+                date=day, code=input_currency).first()
+            input_eur = input_eur_db.value
+        if output_currency == 'EUR':
+            output_eur = 1
+        else:
+            output_eur_db = RateModel.query.filter_by(
+                date=day, code=output_currency).first()
+            output_eur = output_eur_db.value
+
+        return Rate(input_currency=input_currency,
+                    output_currency=output_currency,
+                    day=day,
+                    output_value=input_value * output_eur / input_eur)
 
 
 schema = graphene.Schema(query=Query)
-
-
-if __name__ == '__main__':
-    print(
-        schema.execute('''
-            query {
-                rate(from_: "CZK", to_: "EUR", day: "today") {
-                    from_
-                    to_
-                    day
-                }
-            }''')
-    )
