@@ -17,6 +17,7 @@ RUN set -ex; \
     pip install --no-cache-dir -r requirements.in; \
     pip uninstall -y wheel setuptools
 
+RUN mkdir /mnt/db
 COPY fx_converter fx_converter
 COPY uwsgi.ini uwsgi.py ./
 
