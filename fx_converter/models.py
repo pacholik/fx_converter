@@ -1,3 +1,4 @@
+import sqlalchemy.exc
 import sqlalchemy.orm.exc
 from datetime import datetime
 from flask_sqlalchemy import sqlalchemy as sa
@@ -25,8 +26,13 @@ class BaseModelMixin(db.Model):
     @classmethod
     def create(cls, **kwargs):
         b = cls(**kwargs)
-        db.session.add(b)
-        db.session.commit()
+        try:
+            db.session.add(b)
+            db.session.commit()
+        except sqlalchemy.exc.SQLAlchemyError:
+            logger.warn("Rolling back, %s", b)
+            db.session.rollback()
+            return None
         return b
 
     @classmethod

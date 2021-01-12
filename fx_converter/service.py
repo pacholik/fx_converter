@@ -27,9 +27,8 @@ def download_history(start_at: date = date(2000, 1, 1),
 
 def basic_db_data():
     for day, code, value in download_history():
-        try:
-            rate = Rate.create(date=day, code=code, value=value)
-        except sqlalchemy.exc.SQLAlchemyError:
-            logger.warn("Duplicate record avoided: %s %s", day, code)
-        else:
-            logger.info("Rate %s inserted", rate.id_)
+        rate = Rate.create(date=day, code=code, value=value)
+
+
+def latest_available_day():
+    print(Rate.query.order_by(Rate.date.desc()).first().date)

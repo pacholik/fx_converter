@@ -17,6 +17,9 @@ class Query(graphene.ObjectType):
     # Explain connections better:
     # https://github.com/graphql-python/graphene/issues/592
 
+    # def resolve_rates(self, info, **kwargs):
+    #     print(kwargs)
+
     convert = graphene.Field(graphene.Decimal,
                              input_currency=graphene.String(),
                              input_value=graphene.Decimal(),
@@ -27,7 +30,6 @@ class Query(graphene.ObjectType):
                         input_currency, input_value, output_currency, day):
         # TODO: find latest day
         #       force download if not found
-        print(RateModel.query.order_by(RateModel.date.desc()).first().date)
 
         if input_currency == 'EUR':
             input_eur = 1
