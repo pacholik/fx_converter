@@ -1,6 +1,5 @@
-import sqlalchemy.exc
 import requests
-from datetime import date
+from datetime import date, timedelta
 import logging
 
 from fx_converter.config import LOGGER_NAME
@@ -9,8 +8,10 @@ from fx_converter.models import Rate
 logger = logging.getLogger(LOGGER_NAME)
 
 
-def download_history(start_at: date = date(2000, 1, 1),
-                     end_at: date = date(2021, 1, 1)):
+ONEDAY = timedelta(days=1)
+
+
+def download_history(start_at: date, end_at: date):
     response = requests.get('https://api.exchangeratesapi.io/history',
                             params={
                                 'start_at': start_at.isoformat(),
@@ -26,9 +27,22 @@ def download_history(start_at: date = date(2000, 1, 1),
 
 
 def basic_db_data():
-    for day, code, value in download_history():
-        rate = Rate.create(date=day, code=code, value=value)
+    for day, code, value in download_history(start_at=date(2020, 12, 1),
+                                             end_at=date(2021, 1, 1)):
+        Rate.create(date=day, code=code, value=value)
 
 
-def latest_available_day():
-    print(Rate.query.order_by(Rate.date.desc()).first().date)
+def update_db(till=None):
+    if not till:
+        till = date.today()
+    if not Rate.query.first():
+        basic_db_data()
+
+    latest_db = Rate.query.order_by(Rate.date.desc()).first().date
+    try:
+        for day, code, value in download_history(start_at=latest_db + ONEDAY,
+                                                 end_at=till + ONEDAY):
+            Rate.create(date=day, code=code, value=value)
+    except Exception:
+        return latest_db
+    return till

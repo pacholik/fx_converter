@@ -1,24 +1,36 @@
 import graphene
-from graphene import relay
-from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
 
 from fx_converter.models import Rate as RateModel
+from fx_converter.service import update_db
 
 
-class Rate(SQLAlchemyObjectType):
-    class Meta:
-        model = RateModel
-        interfaces = (relay.Node,)
+# class Rate(SQLAlchemyObjectType):
+#     class Meta:
+#         model = RateModel
+#         interfaces = (relay.Node,)
+class Rate(graphene.ObjectType):
+    date = graphene.Date()
+    code = graphene.String()
+    value = graphene.Decimal()
 
 
 class Query(graphene.ObjectType):
-    node = relay.Node.Field()
-    rates = SQLAlchemyConnectionField(Rate)
+    # node = relay.Node.Field()
+    # rates = SQLAlchemyConnectionField(Rate)
     # Explain connections better:
     # https://github.com/graphql-python/graphene/issues/592
 
-    # def resolve_rates(self, info, **kwargs):
-    #     print(kwargs)
+    rates = graphene.Field(graphene.List(Rate),
+                           day=graphene.Date())
+
+    def resolve_rates(self, info, day=None):
+        day = update_db(day)
+
+        rates_db = RateModel.query.filter_by(date=day).all()
+        return [
+            Rate(date=r.date, code=r.code, value=r.value)
+            for r in rates_db
+        ]
 
     convert = graphene.Field(graphene.Decimal,
                              input_currency=graphene.String(),
@@ -27,9 +39,9 @@ class Query(graphene.ObjectType):
                              day=graphene.Date())
 
     def resolve_convert(self, info,
-                        input_currency, input_value, output_currency, day):
-        # TODO: find latest day
-        #       force download if not found
+                        input_currency, input_value, output_currency,
+                        day=None):
+        day = update_db(day)
 
         if input_currency == 'EUR':
             input_eur = 1
